@@ -1,3 +1,6 @@
-int calculate() {
-  return 6 * 7;
-}
+/// Modèles de données de CampusFlow (Dart pur, sans Flutter).
+library;
+
+export 'src/course.dart';
+export 'src/task.dart';
+export 'src/user.dart';
