@@ -1,3 +1,5 @@
+import 'json_utils.dart';
+
 /// Une tâche (rendu, examen, lecture…) liée à un cours.
 ///
 /// Objet **immuable** : tous les attributs sont `final`.
@@ -40,6 +42,27 @@ class Task {
         description: description ?? this.description,
         coursId: coursId ?? this.coursId,
       );
+
+  /// JSON → objet. Lève une [FormatException] si un champ obligatoire
+  /// manque ou a un mauvais type.
+  factory Task.fromJson(Map<String, dynamic> json) => Task(
+        id: lireId(json),
+        titre: lireTexte(json, 'titre'),
+        echeance: lireDate(json, 'echeance'),
+        terminee: lireBooleen(json, 'terminee'),
+        description: lireTexteFacultatif(json, 'description'),
+        coursId: lireTexteFacultatif(json, 'coursId'),
+      );
+
+  /// Objet → JSON (servira pour POST et PATCH en séance 7).
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'titre': titre,
+        'echeance': echeance.toIso8601String(),
+        'terminee': terminee,
+        'description': description,
+        'coursId': coursId,
+      };
 
   @override
   String toString() =>

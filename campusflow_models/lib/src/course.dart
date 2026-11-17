@@ -1,3 +1,5 @@
+import 'json_utils.dart';
+
 /// Un cours suivi par l'étudiant.
 class Course {
   final String id;
@@ -18,6 +20,20 @@ class Course {
         enseignant: enseignant ?? this.enseignant,
         horaire: horaire ?? this.horaire,
       );
+
+  factory Course.fromJson(Map<String, dynamic> json) => Course(
+        id: lireId(json),
+        nom: lireTexte(json, 'nom'),
+        enseignant: lireTexteFacultatif(json, 'enseignant'),
+        horaire: lireTexteFacultatif(json, 'horaire'),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'nom': nom,
+        'enseignant': enseignant,
+        'horaire': horaire,
+      };
 
   @override
   String toString() => 'Course($id, « $nom »)';

@@ -1,21 +1,34 @@
 import 'package:campusflow_models/campusflow_models.dart';
 
 /// Démonstration : `dart run` depuis le dossier campusflow_models.
-void main() {
-  final cours = Course(id: 'c1', nom: 'Programmation mobile', enseignant: 'M. Compaoré');
-  final tache = Task(
-    id: '1',
-    titre: 'Rendu TP Dart',
-    echeance: DateTime(2026, 11, 22, 23, 59),
-    coursId: cours.id,
-  );
-  final moi = User(id: 'u1', nom: 'Fatimata Ouédraogo', email: 'etudiant@campusflow.example');
+Future<void> main() async {
+  // 1. Chargement réussi : async / await sans bloquer.
+  print('Chargement des tâches…');
+  try {
+    final taches = await const DepotSimule().chargerTaches();
+    print('${taches.length} tâche(s) reçue(s) :');
+    for (final t in taches) {
+      final retard = t.estEnRetard() ? '  ⚠ en retard' : '';
+      print('  - $t$retard');
+    }
 
-  print(moi);
-  print(cours);
-  print(tache);
+    // Immuabilité : cocher une tâche = créer une copie.
+    final premiere = taches.first;
+    final cochee = premiere.copyWith(terminee: true);
+    print('Original : ${premiere.terminee} · Copie : ${cochee.terminee}');
+  } on DepotException catch (e) {
+    print('Erreur : ${e.message}');
+  } finally {
+    print('Fin du chargement\n');
+  }
 
-  // Immuabilité : « cocher » une tâche = créer une copie.
-  final cochee = tache.copyWith(terminee: true);
-  print('Original : ${tache.terminee} · Copie : ${cochee.terminee}');
+  // 2. Chargement en échec : l'erreur est interceptée, pas de plantage.
+  print('Chargement avec serveur en panne…');
+  try {
+    await const DepotSimule(echec: true).chargerTaches();
+  } on DepotException catch (e) {
+    print('Erreur interceptée : ${e.message}');
+  } finally {
+    print('Fin du chargement');
+  }
 }
