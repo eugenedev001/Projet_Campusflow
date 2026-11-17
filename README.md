@@ -2,7 +2,8 @@
 
 Application mobile de suivi des cours, des échéances et des tâches d'un étudiant, construite pas à pas au fil des 7 séances du cours de Programmation mobile (Master 1, M. Moctar Compaoré, 2026-2027).
 
-**Auteur :** KANAZOE Moubarak
+**Auteur :** Ouedraogo Eugene Golbert
+
 
 ## Organisation du dépôt
 
