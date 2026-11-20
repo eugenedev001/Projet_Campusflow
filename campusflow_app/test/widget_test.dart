@@ -27,18 +27,6 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
   });
 
-  testWidgets('le détail marque une tâche comme faite', (tester) async {
-    await ouvrirEcheances(tester);
-
-    await tester.tap(find.text('Rendu TP Dart'));
-    await tester.pumpAndSettle();
-    expect(find.text('Détail'), findsOneWidget);
-
-    await tester.tap(find.text('Marquer comme fait'));
-    await tester.pumpAndSettle();
-    expect(find.text('Déjà faite'), findsOneWidget);
-  });
-
   testWidgets('le formulaire refuse un titre vide puis ajoute la tâche', (tester) async {
     await ouvrirEcheances(tester);
 
@@ -55,5 +43,32 @@ void main() {
 
     expect(find.text('Mes échéances'), findsOneWidget);
     expect(find.text('Mémoire'), findsOneWidget);
+  });
+
+  testWidgets('le détail marque une tâche comme faite', (tester) async {
+    await ouvrirEcheances(tester);
+
+    await tester.tap(find.text('Rendu TP Dart'));
+    await tester.pumpAndSettle();
+    expect(find.text('Détail'), findsOneWidget);
+
+    await tester.tap(find.text('Marquer comme fait'));
+    await tester.pumpAndSettle();
+    expect(find.text('Déjà faite'), findsOneWidget);
+  });
+
+  testWidgets('à 840 dp et plus, la liste et le détail sont côte à côte', (tester) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await ouvrirEcheances(tester);
+    expect(find.text('Sélectionne une tâche pour voir son détail'), findsOneWidget);
+
+    await tester.tap(find.text('Projet Spark'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Marquer comme fait'), findsOneWidget);
+    expect(find.text('Détail'), findsNothing); // pas de nouvel écran : même page
   });
 }
