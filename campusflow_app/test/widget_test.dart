@@ -26,4 +26,16 @@ void main() {
     expect(find.text('Rendu TP Dart'), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
   });
+
+  testWidgets('le détail marque une tâche comme faite', (tester) async {
+    await ouvrirEcheances(tester);
+
+    await tester.tap(find.text('Rendu TP Dart'));
+    await tester.pumpAndSettle();
+    expect(find.text('Détail'), findsOneWidget);
+
+    await tester.tap(find.text('Marquer comme fait'));
+    await tester.pumpAndSettle();
+    expect(find.text('Déjà faite'), findsOneWidget);
+  });
 }

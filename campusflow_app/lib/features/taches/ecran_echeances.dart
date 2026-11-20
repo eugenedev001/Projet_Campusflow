@@ -2,6 +2,7 @@ import 'package:campusflow_models/campusflow_models.dart';
 import 'package:flutter/material.dart';
 
 import 'donnees_exemple.dart';
+import 'ecran_detail.dart';
 import 'widgets/tache_tile.dart';
 
 /// Écran Échéances : AppBar, ListView.builder de ListTile, bouton flottant.
@@ -33,8 +34,10 @@ class _EcranEcheancesState extends State<EcranEcheances> {
   }
 
   void _ouvrirDetail(Task tache) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Détail de « ${tache.titre} » au TP 2')),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EcranDetail(tache: tache, onMarquerFait: _remplacer),
+      ),
     );
   }
 
