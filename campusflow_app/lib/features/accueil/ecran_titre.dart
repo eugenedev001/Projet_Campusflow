@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'ecran_principal.dart';
+
 /// Écran de titre. Aucune couleur ni taille écrite en dur :
 /// tout est lu dans le thème (Theme.of(context)).
 ///
@@ -51,8 +53,8 @@ class EcranTitre extends StatelessWidget {
                 ),
                 const SizedBox(height: 40),
                 FilledButton(
-                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Les écrans arrivent en séance 5')),
+                  onPressed: () => Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const EcranPrincipal()),
                   ),
                   child: const Text('Commencer'),
                 ),
