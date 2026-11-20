@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'donnees_exemple.dart';
 import 'ecran_detail.dart';
+import 'ecran_formulaire.dart';
 import 'widgets/tache_tile.dart';
 
 /// Écran Échéances : AppBar, ListView.builder de ListTile, bouton flottant.
@@ -27,10 +28,12 @@ class _EcranEcheancesState extends State<EcranEcheances> {
 
   void _cocher(Task tache, bool faite) => _remplacer(tache.copyWith(terminee: faite));
 
-  void _ouvrirFormulaire() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Le formulaire arrive au TP 3')),
+  Future<void> _ouvrirFormulaire() async {
+    final nouvelle = await Navigator.of(context).push<Task>(
+      MaterialPageRoute(builder: (_) => const EcranFormulaire()),
     );
+    if (nouvelle == null) return; // l'utilisateur a fait « retour »
+    setState(() => _taches = [..._taches, nouvelle]);
   }
 
   void _ouvrirDetail(Task tache) {

@@ -38,4 +38,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Déjà faite'), findsOneWidget);
   });
+
+  testWidgets('le formulaire refuse un titre vide puis ajoute la tâche', (tester) async {
+    await ouvrirEcheances(tester);
+
+    await tester.tap(find.byTooltip('Nouvelle tâche'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pump();
+    expect(find.text('Le titre est obligatoire'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField).first, 'Mémoire');
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mes échéances'), findsOneWidget);
+    expect(find.text('Mémoire'), findsOneWidget);
+  });
 }
