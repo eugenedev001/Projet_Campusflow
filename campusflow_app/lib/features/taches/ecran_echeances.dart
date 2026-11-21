@@ -1,68 +1,46 @@
 import 'package:campusflow_models/campusflow_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'donnees_exemple.dart';
 import 'ecran_detail.dart';
+import 'taches_provider.dart';
 import 'widgets/tache_tile.dart';
 
 /// Seuil Material 3 de la classe « étendue » : liste + détail côte à côte.
 const double seuilTablette = 840;
 
-/// Écran Échéances : AppBar, ListView.builder de ListTile, bouton flottant.
-/// (La NavigationBar est dans le ShellRoute, partagée par les 3 onglets.)
-class EcranEcheances extends StatefulWidget {
+/// Écran Échéances (/taches) : AppBar, ListView.builder, bouton flottant.
+/// Les données viennent de l'état partagé (Riverpod).
+class EcranEcheances extends ConsumerStatefulWidget {
   const EcranEcheances({super.key});
 
   @override
-  State<EcranEcheances> createState() => _EcranEcheancesState();
+  ConsumerState<EcranEcheances> createState() => _EcranEcheancesState();
 }
 
-class _EcranEcheancesState extends State<EcranEcheances> {
-  List<Task> _taches = tachesExemple();
-  String? _idSelectionne; // tâche affichée à droite en mode tablette
-
-  /// Remplace une tâche par sa nouvelle version.
-  /// Immuable : on construit une NOUVELLE liste, on ne modifie pas l'ancienne.
-  void _remplacer(Task nouvelle) {
-    setState(() {
-      _taches = [for (final t in _taches) t.id == nouvelle.id ? nouvelle : t];
-    });
-  }
-
-  void _cocher(Task tache, bool faite) => _remplacer(tache.copyWith(terminee: faite));
-
-  Future<void> _ouvrirFormulaire() async {
-    // push renvoie la valeur passée à pop() par le formulaire.
-    final nouvelle = await context.push<Task>('/taches/nouvelle');
-    if (nouvelle == null) return; // l'utilisateur a fait « retour »
-    setState(() => _taches = [..._taches, nouvelle]);
-  }
-
-  void _ouvrirDetail(Task tache) {
-    context.push('/taches/${tache.id}'); // adresse avec le paramètre :id
-  }
-
-  Task? get _selection {
-    for (final t in _taches) {
-      if (t.id == _idSelectionne) return t;
-    }
-    return null;
-  }
+class _EcranEcheancesState extends ConsumerState<EcranEcheances> {
+  // Seul état LOCAL restant : la tâche sélectionnée en mode tablette.
+  // C'est un détail d'affichage, il n'a pas à être partagé.
+  String? _idSelectionne;
 
   @override
   Widget build(BuildContext context) {
-    // Tri : la plus proche échéance en premier.
-    final taches = [..._taches]..sort((a, b) => a.echeance.compareTo(b.echeance));
+    // ref.watch dans build : on se reconstruit à chaque changement.
+    final toutes = ref.watch(tachesProvider);
+    // Tri : la plus proche échéance en premier (nouvelle liste, l'état n'est pas modifié).
+    final taches = [...toutes]..sort((a, b) => a.echeance.compareTo(b.echeance));
+
+    void cocher(Task t, bool faite) =>
+        ref.read(tachesProvider.notifier).cocher(t.id, faite); // ref.read : action
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mes échéances')),
       floatingActionButton: FloatingActionButton(
-        onPressed: _ouvrirFormulaire,
+        onPressed: () => context.push('/taches/nouvelle'),
         tooltip: 'Nouvelle tâche',
         child: const Icon(Icons.add),
       ),
-      // LayoutBuilder : on regarde la place donnée par le parent.
       body: LayoutBuilder(
         builder: (context, constraints) {
           final large = constraints.maxWidth >= seuilTablette;
@@ -74,16 +52,17 @@ class _EcranEcheancesState extends State<EcranEcheances> {
               if (large) {
                 setState(() => _idSelectionne = t.id);
               } else {
-                _ouvrirDetail(t);
+                context.push('/taches/${t.id}'); // adresse avec :id
               }
             },
-            onCocher: _cocher,
+            onCocher: cocher,
           );
 
           if (!large) return liste; // téléphone : la liste seule
 
           // Tablette : liste (2/5) et détail (3/5) côte à côte.
-          final selection = _selection;
+          final id = _idSelectionne;
+          final selection = toutes.where((t) => t.id == id).firstOrNull;
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -95,7 +74,7 @@ class _EcranEcheancesState extends State<EcranEcheances> {
                     ? const _AucuneSelection()
                     : DetailTache(
                         tache: selection,
-                        onMarquerFait: () => _cocher(selection, true),
+                        onMarquerFait: () => cocher(selection, true),
                       ),
               ),
             ],

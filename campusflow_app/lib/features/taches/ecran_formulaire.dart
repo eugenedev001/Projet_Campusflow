@@ -1,21 +1,22 @@
 import 'package:campusflow_models/campusflow_models.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/router/app_router.dart';
 import 'donnees_exemple.dart';
+import 'taches_provider.dart';
 
 /// Écran « Nouvelle tâche », à l'adresse /taches/nouvelle.
-/// TP 2 : la tâche créée est renvoyée à la liste par pop().
-class EcranFormulaire extends StatefulWidget {
+/// La tâche créée est ajoutée dans l'état partagé.
+class EcranFormulaire extends ConsumerStatefulWidget {
   const EcranFormulaire({super.key});
 
   @override
-  State<EcranFormulaire> createState() => _EcranFormulaireState();
+  ConsumerState<EcranFormulaire> createState() => _EcranFormulaireState();
 }
 
-class _EcranFormulaireState extends State<EcranFormulaire> {
+class _EcranFormulaireState extends ConsumerState<EcranFormulaire> {
   final _formKey = GlobalKey<FormState>();
   final _titre = TextEditingController();
   final _description = TextEditingController();
@@ -64,14 +65,12 @@ class _EcranFormulaireState extends State<EcranFormulaire> {
       coursId: _coursId,
     );
 
+    // ref.read dans une action : on ajoute à l'état partagé.
+    ref.read(tachesProvider.notifier).ajouter(tache);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Tâche « ${tache.titre} » enregistrée')),
     );
-    if (context.canPop()) {
-      context.pop(tache); // la liste reçoit la tâche
-    } else {
-      context.go('/taches');
-    }
+    retourOuListe(context);
   }
 
   @override

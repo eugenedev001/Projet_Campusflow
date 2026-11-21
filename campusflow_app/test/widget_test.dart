@@ -49,7 +49,25 @@ void main() {
     expect(find.text('Programmation mobile'), findsOneWidget);
   });
 
-  testWidgets('le formulaire (/taches/nouvelle) ajoute une tâche à la liste',
+  testWidgets('état partagé : une tâche cochée dans le détail l\'est aussi dans la liste',
+      (tester) async {
+    await ouvrirEcheances(tester);
+
+    await tester.tap(find.text('Rendu TP Dart'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Marquer comme fait'));
+    await tester.pumpAndSettle();
+    expect(find.text('Déjà faite'), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    // De retour sur la liste : la tâche est cochée et porte le badge « Faite »
+    // (« Lire le chapitre 4 » était déjà faite, d'où 2 badges).
+    expect(find.text('Faite'), findsNWidgets(2));
+  });
+
+  testWidgets('état partagé : une tâche ajoutée dans le formulaire apparaît dans la liste',
       (tester) async {
     await ouvrirEcheances(tester);
 

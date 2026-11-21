@@ -1,24 +1,24 @@
 import 'package:campusflow_models/campusflow_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/router/app_router.dart';
 import 'donnees_exemple.dart';
+import 'taches_provider.dart';
 import 'widgets/badge_echeance.dart';
 
 /// Écran Détail (téléphone), à l'adresse /taches/:id.
-///
-/// TP 2 : la tâche est retrouvée par son :id dans les données d'exemple.
-/// Le bouton ne peut pas encore prévenir la liste : c'est exactement
-/// le problème que l'état partagé (TP 3) va résoudre.
-class EcranDetail extends StatelessWidget {
+/// Il lit la tâche dans l'état partagé à partir de son identifiant.
+class EcranDetail extends ConsumerWidget {
   const EcranDetail({super.key, required this.id});
 
   final String id; // paramètre :id de l'adresse
 
   @override
-  Widget build(BuildContext context) {
-    final tache = tachesExemple().where((t) => t.id == id).firstOrNull;
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ref.watch dans build : l'écran se reconstruit si la tâche change.
+    final tache = ref.watch(tacheParIdProvider(id));
 
     return Scaffold(
       appBar: AppBar(
@@ -29,9 +29,13 @@ class EcranDetail extends StatelessWidget {
           ? Center(child: Text('Tâche « $id » introuvable'))
           : DetailTache(
               tache: tache,
-              onMarquerFait: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Branché sur l\'état partagé au TP 3')),
-              ),
+              onMarquerFait: () {
+                // ref.read dans une action : on agit, on n'écoute pas.
+                ref.read(tachesProvider.notifier).cocher(tache.id, true);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('« ${tache.titre} » marquée comme faite')),
+                );
+              },
             ),
     );
   }
