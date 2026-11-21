@@ -62,9 +62,12 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
 
-    // De retour sur la liste : la tâche est cochée et porte le badge « Faite »
-    // (« Lire le chapitre 4 » était déjà faite, d'où 2 badges).
-    expect(find.text('Faite'), findsNWidgets(2));
+    // Elle a quitté le filtre « À faire »…
+    expect(find.text('Rendu TP Dart'), findsNothing);
+    // … et apparaît dans « Faites ».
+    await tester.tap(find.textContaining('Faites'));
+    await tester.pumpAndSettle();
+    expect(find.text('Rendu TP Dart'), findsOneWidget);
   });
 
   testWidgets('état partagé : une tâche ajoutée dans le formulaire apparaît dans la liste',
@@ -84,6 +87,22 @@ void main() {
 
     expect(find.text('Mes échéances'), findsOneWidget);
     expect(find.text('Mémoire'), findsOneWidget);
+  });
+
+  testWidgets('les filtres : à faire, faites, en retard', (tester) async {
+    await ouvrirEcheances(tester);
+
+    expect(find.text('À faire · 3'), findsOneWidget);
+    expect(find.text('Projet Spark'), findsNothing); // en retard, pas « à faire »
+
+    await tester.tap(find.text('En retard · 1'));
+    await tester.pumpAndSettle();
+    expect(find.text('Projet Spark'), findsOneWidget);
+    expect(find.text('Rendu TP Dart'), findsNothing);
+
+    await tester.tap(find.text('Faites · 1'));
+    await tester.pumpAndSettle();
+    expect(find.text('Lire le chapitre 4'), findsOneWidget);
   });
 
   testWidgets('à 840 dp et plus, la liste et le détail sont côte à côte', (tester) async {

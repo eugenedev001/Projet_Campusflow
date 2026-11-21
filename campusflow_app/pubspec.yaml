@@ -37,7 +37,7 @@ dependencies:
   intl: ^0.20.2
   campusflow_models:
     path: ../campusflow_models
-  flutter_riverpod: ^3.3.2
+  flutter_riverpod: ^2.6.1
   go_router: ^17.0.0
 
 dev_dependencies:

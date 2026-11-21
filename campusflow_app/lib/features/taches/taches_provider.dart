@@ -32,3 +32,55 @@ final tacheParIdProvider = Provider.family<Task?, String>((ref, id) {
   }
   return null;
 });
+
+// ---------------------------------------------------------------------------
+// Filtres (TP 4)
+// ---------------------------------------------------------------------------
+
+enum FiltreTaches {
+  aFaire('À faire'),
+  faites('Faites'),
+  enRetard('En retard');
+
+  const FiltreTaches(this.libelle);
+  final String libelle;
+}
+
+/// Le filtre choisi par l'utilisateur sur l'écran des échéances.
+class FiltreNotifier extends Notifier<FiltreTaches> {
+  @override
+  FiltreTaches build() => FiltreTaches.aFaire;
+
+  void choisir(FiltreTaches filtre) => state = filtre;
+}
+
+final filtreProvider = NotifierProvider<FiltreNotifier, FiltreTaches>(FiltreNotifier.new);
+
+/// Fournisseur DÉRIVÉ : il ne stocke rien, il calcule les trois listes
+/// à partir de tachesProvider. Une tâche cochée change de liste toute seule.
+final tachesParFiltreProvider = Provider<Map<FiltreTaches, List<Task>>>((ref) {
+  final maintenant = DateTime.now();
+  final toutes = [...ref.watch(tachesProvider)]
+    ..sort((a, b) => a.echeance.compareTo(b.echeance));
+
+  return {
+    FiltreTaches.aFaire: [
+      for (final t in toutes)
+        if (!t.terminee && !t.estEnRetard(maintenant)) t,
+    ],
+    FiltreTaches.faites: [
+      for (final t in toutes)
+        if (t.terminee) t,
+    ],
+    FiltreTaches.enRetard: [
+      for (final t in toutes)
+        if (t.estEnRetard(maintenant)) t,
+    ],
+  };
+});
+
+/// Les tâches à afficher : celles du filtre choisi.
+final tachesVisiblesProvider = Provider<List<Task>>((ref) {
+  final filtre = ref.watch(filtreProvider);
+  return ref.watch(tachesParFiltreProvider)[filtre] ?? const [];
+});

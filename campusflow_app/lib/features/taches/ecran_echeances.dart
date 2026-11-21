@@ -10,7 +10,7 @@ import 'widgets/tache_tile.dart';
 /// Seuil Material 3 de la classe « étendue » : liste + détail côte à côte.
 const double seuilTablette = 840;
 
-/// Écran Échéances (/taches) : AppBar, ListView.builder, bouton flottant.
+/// Écran Échéances (/taches) : AppBar, filtres, ListView.builder, bouton flottant.
 /// Les données viennent de l'état partagé (Riverpod).
 class EcranEcheances extends ConsumerStatefulWidget {
   const EcranEcheances({super.key});
@@ -27,9 +27,10 @@ class _EcranEcheancesState extends ConsumerState<EcranEcheances> {
   @override
   Widget build(BuildContext context) {
     // ref.watch dans build : on se reconstruit à chaque changement.
+    final taches = ref.watch(tachesVisiblesProvider);
+    final filtre = ref.watch(filtreProvider);
+    final parFiltre = ref.watch(tachesParFiltreProvider);
     final toutes = ref.watch(tachesProvider);
-    // Tri : la plus proche échéance en premier (nouvelle liste, l'état n'est pas modifié).
-    final taches = [...toutes]..sort((a, b) => a.echeance.compareTo(b.echeance));
 
     void cocher(Task t, bool faite) =>
         ref.read(tachesProvider.notifier).cocher(t.id, faite); // ref.read : action
@@ -41,45 +42,89 @@ class _EcranEcheancesState extends ConsumerState<EcranEcheances> {
         tooltip: 'Nouvelle tâche',
         child: const Icon(Icons.add),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final large = constraints.maxWidth >= seuilTablette;
+      body: Column(
+        children: [
+          _BarreFiltres(
+            filtre: filtre,
+            compte: (f) => parFiltre[f]?.length ?? 0,
+            onChoisir: (f) => ref.read(filtreProvider.notifier).choisir(f),
+          ),
+          // Expanded : la Column donne une hauteur non bornée ; sans lui,
+          // le ListView provoque « Vertical viewport was given unbounded height ».
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final large = constraints.maxWidth >= seuilTablette;
 
-          final liste = _ListeTaches(
-            taches: taches,
-            idSelectionne: large ? _idSelectionne : null,
-            onTap: (t) {
-              if (large) {
-                setState(() => _idSelectionne = t.id);
-              } else {
-                context.push('/taches/${t.id}'); // adresse avec :id
-              }
-            },
-            onCocher: cocher,
-          );
+                final liste = _ListeTaches(
+                  taches: taches,
+                  filtre: filtre,
+                  idSelectionne: large ? _idSelectionne : null,
+                  onTap: (t) {
+                    if (large) {
+                      setState(() => _idSelectionne = t.id);
+                    } else {
+                      context.push('/taches/${t.id}'); // adresse avec :id
+                    }
+                  },
+                  onCocher: cocher,
+                );
 
-          if (!large) return liste; // téléphone : la liste seule
+                if (!large) return liste; // téléphone : la liste seule
 
-          // Tablette : liste (2/5) et détail (3/5) côte à côte.
-          final id = _idSelectionne;
-          final selection = toutes.where((t) => t.id == id).firstOrNull;
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(flex: 2, child: liste),
-              const VerticalDivider(width: 1),
-              Expanded(
-                flex: 3,
-                child: selection == null
-                    ? const _AucuneSelection()
-                    : DetailTache(
-                        tache: selection,
-                        onMarquerFait: () => cocher(selection, true),
-                      ),
+                // Tablette : liste (2/5) et détail (3/5) côte à côte.
+                final id = _idSelectionne;
+                final selection = toutes.where((t) => t.id == id).firstOrNull;
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(flex: 2, child: liste),
+                    const VerticalDivider(width: 1),
+                    Expanded(
+                      flex: 3,
+                      child: selection == null
+                          ? const _AucuneSelection()
+                          : DetailTache(
+                              tache: selection,
+                              onMarquerFait: () => cocher(selection, true),
+                            ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Les trois filtres (variante B des wireframes), avec leur compteur.
+class _BarreFiltres extends StatelessWidget {
+  const _BarreFiltres({required this.filtre, required this.compte, required this.onChoisir});
+
+  final FiltreTaches filtre;
+  final int Function(FiltreTaches) compte;
+  final ValueChanged<FiltreTaches> onChoisir;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Row(
+        children: [
+          for (final f in FiltreTaches.values)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text('${f.libelle} · ${compte(f)}'),
+                selected: f == filtre,
+                onSelected: (_) => onChoisir(f),
               ),
-            ],
-          );
-        },
+            ),
+        ],
       ),
     );
   }
@@ -88,12 +133,14 @@ class _EcranEcheancesState extends ConsumerState<EcranEcheances> {
 class _ListeTaches extends StatelessWidget {
   const _ListeTaches({
     required this.taches,
+    required this.filtre,
     required this.idSelectionne,
     required this.onTap,
     required this.onCocher,
   });
 
   final List<Task> taches;
+  final FiltreTaches filtre;
   final String? idSelectionne;
   final ValueChanged<Task> onTap;
   final void Function(Task, bool) onCocher;
@@ -101,11 +148,19 @@ class _ListeTaches extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (taches.isEmpty) {
-      return const Center(child: Text('Aucune tâche. Appuie sur + pour en ajouter une.'));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            'Aucune tâche dans « ${filtre.libelle} ».',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
     }
     return ListView.builder(
       // marge du bas : le bouton flottant ne cache pas la dernière ligne
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
       itemCount: taches.length,
       itemBuilder: (context, i) {
         final t = taches[i];
