@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'features/accueil/ecran_titre.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,16 +12,16 @@ Future<void> main() async {
   runApp(const ProviderScope(child: CampusFlowApp()));
 }
 
-class CampusFlowApp extends StatelessWidget {
+class CampusFlowApp extends ConsumerWidget {
   const CampusFlowApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MaterialApp.router(
       title: 'CampusFlow',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.clair, // le thème centralisé
-      home: const EcranTitre(),
+      routerConfig: ref.watch(routeurProvider), // les adresses de l'application
     );
   }
 }

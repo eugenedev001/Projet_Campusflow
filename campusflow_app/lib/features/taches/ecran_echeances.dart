@@ -1,16 +1,16 @@
 import 'package:campusflow_models/campusflow_models.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import 'donnees_exemple.dart';
 import 'ecran_detail.dart';
-import 'ecran_formulaire.dart';
 import 'widgets/tache_tile.dart';
 
 /// Seuil Material 3 de la classe « étendue » : liste + détail côte à côte.
 const double seuilTablette = 840;
 
 /// Écran Échéances : AppBar, ListView.builder de ListTile, bouton flottant.
-/// (La NavigationBar est dans EcranPrincipal, partagée par les 3 onglets.)
+/// (La NavigationBar est dans le ShellRoute, partagée par les 3 onglets.)
 class EcranEcheances extends StatefulWidget {
   const EcranEcheances({super.key});
 
@@ -33,19 +33,14 @@ class _EcranEcheancesState extends State<EcranEcheances> {
   void _cocher(Task tache, bool faite) => _remplacer(tache.copyWith(terminee: faite));
 
   Future<void> _ouvrirFormulaire() async {
-    final nouvelle = await Navigator.of(context).push<Task>(
-      MaterialPageRoute(builder: (_) => const EcranFormulaire()),
-    );
+    // push renvoie la valeur passée à pop() par le formulaire.
+    final nouvelle = await context.push<Task>('/taches/nouvelle');
     if (nouvelle == null) return; // l'utilisateur a fait « retour »
     setState(() => _taches = [..._taches, nouvelle]);
   }
 
   void _ouvrirDetail(Task tache) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => EcranDetail(tache: tache, onMarquerFait: _remplacer),
-      ),
-    );
+    context.push('/taches/${tache.id}'); // adresse avec le paramètre :id
   }
 
   Task? get _selection {

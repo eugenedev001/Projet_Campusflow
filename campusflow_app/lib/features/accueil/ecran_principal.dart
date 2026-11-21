@@ -1,32 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import '../cours/ecran_cours.dart';
-import '../profil/ecran_profil.dart';
-import '../taches/ecran_echeances.dart';
+/// Coquille du ShellRoute : la NavigationBar autour de l'onglet actif.
+/// L'onglet sélectionné se déduit de l'adresse courante.
+class EcranPrincipal extends StatelessWidget {
+  const EcranPrincipal({super.key, required this.child});
 
-/// Coquille commune aux trois onglets, avec la NavigationBar.
-/// En séance 6, elle deviendra le ShellRoute de go_router.
-class EcranPrincipal extends StatefulWidget {
-  const EcranPrincipal({super.key});
+  final Widget child; // l'écran de l'onglet actif, fourni par go_router
 
-  @override
-  State<EcranPrincipal> createState() => _EcranPrincipalState();
-}
+  static const _adresses = ['/taches', '/cours', '/profil'];
 
-class _EcranPrincipalState extends State<EcranPrincipal> {
-  int _onglet = 0;
+  int _ongletActif(String adresse) {
+    if (adresse.startsWith('/cours')) return 1;
+    if (adresse.startsWith('/profil')) return 2;
+    return 0;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final adresse = GoRouterState.of(context).uri.path;
+
     return Scaffold(
-      // IndexedStack garde l'état de chaque onglet quand on change d'onglet.
-      body: IndexedStack(
-        index: _onglet,
-        children: const [EcranEcheances(), EcranCours(), EcranProfil()],
-      ),
+      body: child,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _onglet,
-        onDestinationSelected: (i) => setState(() => _onglet = i),
+        selectedIndex: _ongletActif(adresse),
+        onDestinationSelected: (i) => context.go(_adresses[i]),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.checklist_outlined),

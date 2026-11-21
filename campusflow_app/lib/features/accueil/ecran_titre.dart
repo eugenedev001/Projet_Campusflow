@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-
-import 'ecran_principal.dart';
 
 /// Écran de titre. Aucune couleur ni taille écrite en dur :
 /// tout est lu dans le thème (Theme.of(context)).
@@ -53,9 +52,8 @@ class EcranTitre extends StatelessWidget {
                 ),
                 const SizedBox(height: 40),
                 FilledButton(
-                  onPressed: () => Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const EcranPrincipal()),
-                  ),
+                  // go : remplace l'adresse (pas de retour vers l'écran d'entrée)
+                  onPressed: () => context.go('/taches'),
                   child: const Text('Commencer'),
                 ),
               ],

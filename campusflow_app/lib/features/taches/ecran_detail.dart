@@ -2,38 +2,37 @@ import 'package:campusflow_models/campusflow_models.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/router/app_router.dart';
 import 'donnees_exemple.dart';
 import 'widgets/badge_echeance.dart';
 
-/// Écran Détail (téléphone) : une AppBar avec retour + le contenu [DetailTache].
-class EcranDetail extends StatefulWidget {
-  const EcranDetail({super.key, required this.tache, required this.onMarquerFait});
+/// Écran Détail (téléphone), à l'adresse /taches/:id.
+///
+/// TP 2 : la tâche est retrouvée par son :id dans les données d'exemple.
+/// Le bouton ne peut pas encore prévenir la liste : c'est exactement
+/// le problème que l'état partagé (TP 3) va résoudre.
+class EcranDetail extends StatelessWidget {
+  const EcranDetail({super.key, required this.id});
 
-  final Task tache;
-  final ValueChanged<Task> onMarquerFait; // prévient la liste du changement
-
-  @override
-  State<EcranDetail> createState() => _EcranDetailState();
-}
-
-class _EcranDetailState extends State<EcranDetail> {
-  late Task _tache = widget.tache;
-
-  void _marquerFait() {
-    // Immuabilité : on crée une copie, on ne modifie pas l'objet.
-    final faite = _tache.copyWith(terminee: true);
-    setState(() => _tache = faite);
-    widget.onMarquerFait(faite);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('« ${faite.titre} » marquée comme faite')),
-    );
-  }
+  final String id; // paramètre :id de l'adresse
 
   @override
   Widget build(BuildContext context) {
+    final tache = tachesExemple().where((t) => t.id == id).firstOrNull;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Détail')),
-      body: DetailTache(tache: _tache, onMarquerFait: _marquerFait),
+      appBar: AppBar(
+        title: const Text('Détail'),
+        leading: BackButton(onPressed: () => retourOuListe(context)),
+      ),
+      body: tache == null
+          ? Center(child: Text('Tâche « $id » introuvable'))
+          : DetailTache(
+              tache: tache,
+              onMarquerFait: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Branché sur l\'état partagé au TP 3')),
+              ),
+            ),
     );
   }
 }

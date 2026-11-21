@@ -1,10 +1,13 @@
 import 'package:campusflow_models/campusflow_models.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/router/app_router.dart';
 import 'donnees_exemple.dart';
 
-/// Écran « Nouvelle tâche ». Renvoie la tâche créée avec Navigator.pop.
+/// Écran « Nouvelle tâche », à l'adresse /taches/nouvelle.
+/// TP 2 : la tâche créée est renvoyée à la liste par pop().
 class EcranFormulaire extends StatefulWidget {
   const EcranFormulaire({super.key});
 
@@ -64,7 +67,11 @@ class _EcranFormulaireState extends State<EcranFormulaire> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Tâche « ${tache.titre} » enregistrée')),
     );
-    Navigator.of(context).pop(tache);
+    if (context.canPop()) {
+      context.pop(tache); // la liste reçoit la tâche
+    } else {
+      context.go('/taches');
+    }
   }
 
   @override
@@ -72,7 +79,10 @@ class _EcranFormulaireState extends State<EcranFormulaire> {
     final echeanceTexte = DateFormat("EEE d MMM y 'à' HH:mm", 'fr_FR').format(_echeance);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Nouvelle tâche')),
+      appBar: AppBar(
+        title: const Text('Nouvelle tâche'),
+        leading: CloseButton(onPressed: () => retourOuListe(context)),
+      ),
       // SingleChildScrollView : le clavier ne bloque jamais le bouton.
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
